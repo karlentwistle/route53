@@ -29,6 +29,7 @@ type AccessIdentifiers struct {
 	SecretKey string
 }
 
+// createHostedZoneRequest
 type ZoneRequest struct {
 	XMLName          xml.Name
 	Name             string
@@ -46,21 +47,43 @@ type HostedZone struct {
 	Endpoint          string
 }
 
+// changeResourceRecordSets
+type RecordSetsRequest struct {
+	XMLName     xml.Name
+	ChangeBatch ChangeBatch
+}
+
+type ChangeBatch struct {
+	Comment string
+	Changes []Change `xml:"Changes>Change"`
+}
+
+type Change struct {
+	Action            string
+	ResourceRecordSet ResourceRecordSet 
+}
+
+type ResourceRecordSet struct {
+	Name            string
+	Type            string
+	TTL             int
+	ResourceRecords []ResourceRecord `xml:"ResourceRecords>ResourceRecord"`
+	HealthCheckId		string
+}
+
+type ResourceRecord struct {
+	Value string
+}
+
 func (c *HostedZone) CreateHostedZone() (req *http.Response, err error) {
 	if c.Endpoint == "" {
-		c.Endpoint = Route53URL + "hostedzone"
+		c.Endpoint = Route53URL + `hostedzone`
 	}
-	date := time.Now()
-	signature := signature(c.AccessIdentifiers.SecretKey, date)
 	postData, err := createHostedZoneXML(c.HostedZoneRequest)
 	if err != nil {
 		return nil, err
 	}
-	headers := http.Header{}
-	headers.Add("Date", date.UTC().Format(time.ANSIC))
-	headers.Add("Content-Type", "text/xml; charset=UTF-8")
-	headers.Add("X-Amzn-Authorization", "AWS3-HTTPS AWSAccessKeyId="+c.AccessIdentifiers.AccessKey+",Algorithm=HmacSHA256,Signature="+signature)
-	req, err = remotePost(c.Endpoint, postData, headers)
+	req, err = remotePost(c, postData)
 	return
 }
 
@@ -85,6 +108,19 @@ func createHostedZoneXML(hostedZoneRequest ZoneRequest) (response string, err er
 	return
 }
 
+func createResourceRecordSetsXML(resourceRecordSetsRequest RecordSetsRequest) (response string, err error) {
+	resourceRecordSetsRequest.XMLName = xml.Name{
+		Space: endpoint + `/doc/` + api + `/`,
+		Local: "ChangeResourceRecordSetsRequest",
+	}
+	byteXML, err := xml.MarshalIndent(resourceRecordSetsRequest, "", `   `)
+	if err != nil {
+		return "", err
+	}
+	response = xml.Header + string(byteXML)
+	return
+}
+
 func remoteTime(url string) (time string, err error) {
 	headers, err := remoteHeaders(url)
 	if err != nil {
@@ -102,13 +138,18 @@ func remoteHeaders(url string) (http.Header, error) {
 	return resp.Header, nil
 }
 
-func remotePost(url string, postData string, headers http.Header) (*http.Response, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(postData)))
+func remotePost(c *HostedZone, postData string) (*http.Response, error) {
+	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = headers
+	date := time.Now()
+	signature := signature(c.AccessIdentifiers.SecretKey, date)
+	req.Header.Add("Date", date.UTC().Format(time.ANSIC))
+	req.Header.Add("Content-Type", "text/xml; charset=UTF-8")
+	req.Header.Add("X-Amzn-Authorization", "AWS3-HTTPS AWSAccessKeyId="+c.AccessIdentifiers.AccessKey+",Algorithm=HmacSHA256,Signature="+signature)
+
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -119,5 +160,4 @@ func remotePost(url string, postData string, headers http.Header) (*http.Respons
 }
 
 func main() {
-
 }

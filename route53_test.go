@@ -18,25 +18,38 @@ const createHostedZoneRequest = `<?xml version="1.0" encoding="UTF-8"?>
    </HostedZoneConfig>
 </CreateHostedZoneRequest>`
 
+const changeResourceRecordSets = `<?xml version="1.0" encoding="UTF-8"?>
+
+<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
+   <ChangeBatch>
+      <Comment>optional comment about the changes in this change batch request</Comment>
+      <Changes>
+         <Change>
+            <Action>CREATE</Action>
+            <ResourceRecordSet>
+               <Name>DNS domain name</Name>
+               <Type>DNS record type</Type>
+               <TTL>300</TTL>
+               <ResourceRecords>
+                  <ResourceRecord>
+                     <Value>applicable value for the record type</Value>
+                  </ResourceRecord>
+               </ResourceRecords>
+               <HealthCheckId>optional ID of a Route 53 health check</HealthCheckId>
+            </ResourceRecordSet>
+         </Change>
+      </Changes>
+   </ChangeBatch>
+</ChangeResourceRecordSetsRequest>`
+
+var accessIdentifiers = AccessIdentifiers{AccessKey: "foo", SecretKey: "bar"}
+
 type emptyHandler struct{}
 
 func (h *emptyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Test-Header", "Testing")
-	w.Header().Set("Date", time.Now().Format(time.RFC1123))
-	io.WriteString(w, "hello, world!\n")
-}
-
-var accessIdentifiers = AccessIdentifiers{AccessKey: "foo", SecretKey: "bar"}
-var hostedZoneConfig  = HostedZoneConfig{Comment: "optional comment"}
-var zoneRequest = ZoneRequest{
-  Name: "DNS domain name", 
-  CallerReference: "unique description", 
-  HostedZoneConfig: hostedZoneConfig,
-}
-var hostedZone = HostedZone{
-  AccessIdentifiers: accessIdentifiers, 
-  HostedZoneRequest: zoneRequest, 
-  Endpoint: "",
+  w.Header().Set("Test-Header", "Testing")
+  w.Header().Set("Date", time.Now().Format(time.RFC1123))
+  io.WriteString(w, "hello, world!\n")
 }
 
 func TestSignature(t *testing.T) {
@@ -74,6 +87,14 @@ func TestRemoteTime(t *testing.T) {
 	}
 }
 
+var zoneRequest = ZoneRequest{
+  Name: "DNS domain name", 
+  CallerReference: "unique description", 
+  HostedZoneConfig: HostedZoneConfig{
+    Comment: "optional comment",
+  },
+}
+
 func TestCreateHostedZoneXML(t *testing.T) {
 	responseXML, err := createHostedZoneXML(zoneRequest)
   if err != nil {
@@ -85,6 +106,40 @@ func TestCreateHostedZoneXML(t *testing.T) {
 	}
 }
 
+var resourceRecordSets = RecordSetsRequest{
+  ChangeBatch: ChangeBatch{
+    Comment: "optional comment about the changes in this change batch request",
+    Changes: []Change{
+      {
+        Action: "CREATE",
+        ResourceRecordSet: ResourceRecordSet{
+          Name: "DNS domain name",
+          Type: "DNS record type",
+          TTL: 300,
+          ResourceRecords: []ResourceRecord{
+            {
+              Value: "applicable value for the record type",
+            },
+          },
+          HealthCheckId: "optional ID of a Route 53 health check",
+        },
+      },
+    },
+  },
+}
+
+func TestCreateResourceRecordSetsXML(t *testing.T) {
+  responseXML, err := createResourceRecordSetsXML(resourceRecordSets)
+  if err != nil {
+    t.Fatal("Error:", err)
+  }
+
+  if string(responseXML) != changeResourceRecordSets {
+    t.Fatal("returned XML is incorrectly formatted", responseXML)
+  }    
+}
+
+// TODO Add a test for remote post
 func TestRemotePost(t *testing.T) {
-  
+    
 }
