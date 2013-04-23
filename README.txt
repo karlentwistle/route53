@@ -3,14 +3,12 @@ Example Usage
 
 Create A New Zone
 
-var hostedZoneConfig = HostedZoneConfig{
-  Comment: "optional comment",
-}
-
 var zoneRequest = ZoneRequest{
   Name: "foo.bar.com", 
   CallerReference: "random tracking string", 
-  HostedZoneConfig: hostedZoneConfig,
+  HostedZoneConfig: HostedZoneConfig{
+    Comment: "optional comment",
+  },
 }
 
 var accessIdentifiers = AccessIdentifiers{
