@@ -104,19 +104,13 @@ func remoteHeaders(url string) (http.Header, error) {
 
 func remotePost(url string, postData string, headers http.Header) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(postData)))
-	
 	if err != nil {
 		return nil, err
 	}
 
-	// there must be a better way of doing this
-	for key, value := range headers {
-		req.Header.Add(key, value[0])
-	}
-
+	req.Header = headers
 	client := &http.Client{}
 	res, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
