@@ -27,6 +27,7 @@ const requestExpired = `RequestExpired`
 type AccessIdentifiers struct {
 	AccessKey string
 	SecretKey string
+	time      time.Time
 }
 
 // createHostedZoneRequest
@@ -48,6 +49,12 @@ type HostedZone struct {
 }
 
 // changeResourceRecordSets
+type RecordSet struct {
+	AccessIdentifiers AccessIdentifiers
+	RecordSetsRequest RecordSetsRequest
+	Endpoint          string
+}
+
 type RecordSetsRequest struct {
 	XMLName     xml.Name
 	ChangeBatch ChangeBatch
@@ -60,7 +67,7 @@ type ChangeBatch struct {
 
 type Change struct {
 	Action            string
-	ResourceRecordSet ResourceRecordSet 
+	ResourceRecordSet ResourceRecordSet
 }
 
 type ResourceRecordSet struct {
@@ -68,13 +75,14 @@ type ResourceRecordSet struct {
 	Type            string
 	TTL             int
 	ResourceRecords []ResourceRecord `xml:"ResourceRecords>ResourceRecord"`
-	HealthCheckId		string
+	HealthCheckId   string
 }
 
 type ResourceRecord struct {
 	Value string
 }
 
+// Create Hosted Zone
 func (c *HostedZone) CreateHostedZone() (req *http.Response, err error) {
 	if c.Endpoint == "" {
 		c.Endpoint = Route53URL + `hostedzone`
@@ -84,14 +92,6 @@ func (c *HostedZone) CreateHostedZone() (req *http.Response, err error) {
 		return nil, err
 	}
 	req, err = remotePost(c, postData)
-	return
-}
-
-func signature(AWSSecretKey string, t time.Time) (sha string) {
-	time := t.UTC().Format(time.ANSIC)
-	hash := hmac.New(sha256.New, []byte(AWSSecretKey))
-	hash.Write([]byte(time))
-	sha = base64.StdEncoding.EncodeToString(hash.Sum(nil))
 	return
 }
 
@@ -138,17 +138,39 @@ func remoteHeaders(url string) (http.Header, error) {
 	return resp.Header, nil
 }
 
+func (a *AccessIdentifiers) CreateSignature() (sha string) {
+	// this is rancid it only exists for the test suite...
+	if !a.time.IsZero() {
+		a.time = time.Now()
+	}
+	time := a.time.UTC().Format(time.ANSIC)
+	hash := hmac.New(sha256.New, []byte(a.SecretKey))
+	hash.Write([]byte(time))
+	sha = base64.StdEncoding.EncodeToString(hash.Sum(nil))
+	return
+}
+
+func (a *AccessIdentifiers) CreateHeaders() http.Header {
+	// this is rancid it only exists for the test suite...
+	if !a.time.IsZero() {
+		a.time = time.Now()
+	}
+	signature := a.CreateSignature()
+	h := http.Header{}
+	h.Add("Date", a.time.UTC().Format(time.ANSIC))
+	h.Add("Content-Type", "text/xml; charset=UTF-8")
+	h.Add("X-Amzn-Authorization",
+		"AWS3-HTTPS AWSAccessKeyId="+a.AccessKey+",Algorithm=HmacSHA256,Signature="+signature)
+	return h
+}
+
 func remotePost(c *HostedZone, postData string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
 
-	date := time.Now()
-	signature := signature(c.AccessIdentifiers.SecretKey, date)
-	req.Header.Add("Date", date.UTC().Format(time.ANSIC))
-	req.Header.Add("Content-Type", "text/xml; charset=UTF-8")
-	req.Header.Add("X-Amzn-Authorization", "AWS3-HTTPS AWSAccessKeyId="+c.AccessIdentifiers.AccessKey+",Algorithm=HmacSHA256,Signature="+signature)
+	req.Header = c.AccessIdentifiers.CreateHeaders()
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -158,4 +180,3 @@ func remotePost(c *HostedZone, postData string) (*http.Response, error) {
 
 	return res, err
 }
-

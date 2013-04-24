@@ -47,14 +47,14 @@ var accessIdentifiers = AccessIdentifiers{AccessKey: "foo", SecretKey: "bar"}
 type emptyHandler struct{}
 
 func (h *emptyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-  w.Header().Set("Test-Header", "Testing")
-  w.Header().Set("Date", time.Now().Format(time.RFC1123))
-  io.WriteString(w, "hello, world!\n")
+	w.Header().Set("Test-Header", "Testing")
+	w.Header().Set("Date", time.Now().Format(time.RFC1123))
+	io.WriteString(w, "hello, world!\n")
 }
 
 func TestSignature(t *testing.T) {
-	response := signature("kWcrlUX5JEDGM/LtmEENI/aVmYvHNif5zB+d9+ct", time.Unix(0, 0))
-	if response != "wP04ISYdJymhU5Ix2tGl9kFU71ccwx2Nd1QEUtsONVI=" {
+	response := accessIdentifiers.CreateSignature()
+	if response != "TlXhIyeN+etmLEuVWrz4i+deyqGhDs5P/9wLYq6IyHE=" {
 		t.Fatal("incorrect signature encoding", response)
 	}
 }
@@ -87,19 +87,36 @@ func TestRemoteTime(t *testing.T) {
 	}
 }
 
+func TestAwsRequestHeaders(t *testing.T) {
+	awsHeaders := accessIdentifiers.CreateHeaders()
+
+	if awsHeaders.Get("Date") != accessIdentifiers.time.UTC().Format(time.ANSIC) {
+		t.Fatal("incorrect Date in headers", awsHeaders)
+	}
+
+	if awsHeaders.Get("Content-Type") != "text/xml; charset=UTF-8" {
+		t.Fatal("incorrect Content-Type in headers", awsHeaders)
+	}
+
+	if awsHeaders.Get("X-Amzn-Authorization") != ("AWS3-HTTPS AWSAccessKeyId=foo,Algorithm=HmacSHA256,Signature=TlXhIyeN+etmLEuVWrz4i+deyqGhDs5P/9wLYq6IyHE=") {
+		t.Fatal("incorrect X-Amzn-Authorization in headers", awsHeaders)
+	}
+
+}
+
 var zoneRequest = ZoneRequest{
-  Name: "DNS domain name", 
-  CallerReference: "unique description", 
-  HostedZoneConfig: HostedZoneConfig{
-    Comment: "optional comment",
-  },
+	Name:            "DNS domain name",
+	CallerReference: "unique description",
+	HostedZoneConfig: HostedZoneConfig{
+		Comment: "optional comment",
+	},
 }
 
 func TestCreateHostedZoneXML(t *testing.T) {
 	responseXML, err := createHostedZoneXML(zoneRequest)
-  if err != nil {
-    t.Fatal("Error:", err)
-  }
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
 
 	if string(responseXML) != createHostedZoneRequest {
 		t.Fatal("returned XML is incorrectly formatted", responseXML)
@@ -107,39 +124,39 @@ func TestCreateHostedZoneXML(t *testing.T) {
 }
 
 var resourceRecordSets = RecordSetsRequest{
-  ChangeBatch: ChangeBatch{
-    Comment: "optional comment about the changes in this change batch request",
-    Changes: []Change{
-      {
-        Action: "CREATE",
-        ResourceRecordSet: ResourceRecordSet{
-          Name: "DNS domain name",
-          Type: "DNS record type",
-          TTL: 300,
-          ResourceRecords: []ResourceRecord{
-            {
-              Value: "applicable value for the record type",
-            },
-          },
-          HealthCheckId: "optional ID of a Route 53 health check",
-        },
-      },
-    },
-  },
+	ChangeBatch: ChangeBatch{
+		Comment: "optional comment about the changes in this change batch request",
+		Changes: []Change{
+			{
+				Action: "CREATE",
+				ResourceRecordSet: ResourceRecordSet{
+					Name: "DNS domain name",
+					Type: "DNS record type",
+					TTL:  300,
+					ResourceRecords: []ResourceRecord{
+						{
+							Value: "applicable value for the record type",
+						},
+					},
+					HealthCheckId: "optional ID of a Route 53 health check",
+				},
+			},
+		},
+	},
 }
 
 func TestCreateResourceRecordSetsXML(t *testing.T) {
-  responseXML, err := createResourceRecordSetsXML(resourceRecordSets)
-  if err != nil {
-    t.Fatal("Error:", err)
-  }
+	responseXML, err := createResourceRecordSetsXML(resourceRecordSets)
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
 
-  if string(responseXML) != changeResourceRecordSets {
-    t.Fatal("returned XML is incorrectly formatted", responseXML)
-  }    
+	if string(responseXML) != changeResourceRecordSets {
+		t.Fatal("returned XML is incorrectly formatted", responseXML)
+	}
 }
 
 // TODO Add a test for remote post
 func TestRemotePost(t *testing.T) {
-    
+
 }
