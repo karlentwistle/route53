@@ -1,9 +1,8 @@
-package hostedzone
+package route53
 
 import (
 	"encoding/xml"
 	"net/http"
-	"route53"
 )
 
 const postURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
@@ -25,11 +24,11 @@ func (hz *CreateHostedZoneRequest) XML() (s string, err error) {
 	return	
 }
 
-func (hz *CreateHostedZoneRequest) Create() (req *http.Response, err error) {
+func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Response, err error) {
 	postData, err := hz.XML()
 	if err != nil {
 		return nil, err
 	}
-	req, err = route53.RemotePost(postURL, postData)
+	req, err = RemotePost(postURL, postData, a)
 	return
 }

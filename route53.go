@@ -14,7 +14,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/xml"
 	"net/http"
 	"time"
 )
@@ -28,53 +27,6 @@ type AccessIdentifiers struct {
 	AccessKey string
 	SecretKey string
 	time      time.Time
-}
-
-// changeResourceRecordSets
-type RecordSet struct {
-	AccessIdentifiers AccessIdentifiers
-	RecordSetsRequest RecordSetsRequest
-	Endpoint          string
-}
-
-type RecordSetsRequest struct {
-	XMLName     xml.Name
-	ChangeBatch ChangeBatch
-}
-
-type ChangeBatch struct {
-	Comment string
-	Changes []Change `xml:"Changes>Change"`
-}
-
-type Change struct {
-	Action            string
-	ResourceRecordSet ResourceRecordSet
-}
-
-type ResourceRecordSet struct {
-	Name            string
-	Type            string
-	TTL             int
-	ResourceRecords []ResourceRecord `xml:"ResourceRecords>ResourceRecord"`
-	HealthCheckId   string
-}
-
-type ResourceRecord struct {
-	Value string
-}
-
-func createResourceRecordSetsXML(resourceRecordSetsRequest RecordSetsRequest) (response string, err error) {
-  resourceRecordSetsRequest.XMLName = xml.Name{
-    Space: endpoint + `/doc/` + api + `/`,
-    Local: "ChangeResourceRecordSetsRequest",
-  }
-  byteXML, err := xml.MarshalIndent(resourceRecordSetsRequest, "", `   `)
-  if err != nil {
-    return "", err
-  }
-  response = xml.Header + string(byteXML)
-  return
 }
 
 func remoteTime(url string) (time string, err error) {
@@ -95,11 +47,9 @@ func remoteHeaders(url string) (http.Header, error) {
 }
 
 func (a *AccessIdentifiers) CreateSignature() (sha string) {
-	// this is rancid it only exists for the test suite...
-	if !a.time.IsZero() {
+	if a.time.IsZero() {
 		a.time = time.Now()
 	}
-
 	time := a.time.UTC().Format(time.ANSIC)
 	hash := hmac.New(sha256.New, []byte(a.SecretKey))
 	hash.Write([]byte(time))
@@ -108,11 +58,9 @@ func (a *AccessIdentifiers) CreateSignature() (sha string) {
 }
 
 func (a *AccessIdentifiers) CreateHeaders() http.Header {
-	// this is rancid it only exists for the test suite...
-	if !a.time.IsZero() {
+	if a.time.IsZero() {
 		a.time = time.Now()
 	}
-
 	signature := a.CreateSignature()
 	h := http.Header{}
 	h.Add("Date", a.time.UTC().Format(time.ANSIC))
@@ -122,14 +70,12 @@ func (a *AccessIdentifiers) CreateHeaders() http.Header {
 	return h
 }
 
-func RemotePost(url string, postData string) (*http.Response, error) {
+func RemotePost(url string, postData string, a AccessIdentifiers) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url,bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
-
-	//  req.Header = c.AccessIdentifiers.CreateHeaders()
-
+	req.Header = a.CreateHeaders()
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
