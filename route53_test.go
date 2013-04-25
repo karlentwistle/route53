@@ -8,15 +8,6 @@ import (
 	"time"
 )
 
-const createHostedZoneRequest = `<?xml version="1.0" encoding="UTF-8"?>
-
-<CreateHostedZoneRequest xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
-   <Name>DNS domain name</Name>
-   <CallerReference>unique description</CallerReference>
-   <HostedZoneConfig>
-      <Comment>optional comment</Comment>
-   </HostedZoneConfig>
-</CreateHostedZoneRequest>`
 
 const changeResourceRecordSets = `<?xml version="1.0" encoding="UTF-8"?>
 
@@ -102,25 +93,6 @@ func TestAwsRequestHeaders(t *testing.T) {
 		t.Fatal("incorrect X-Amzn-Authorization in headers", awsHeaders)
 	}
 
-}
-
-var zoneRequest = ZoneRequest{
-	Name:            "DNS domain name",
-	CallerReference: "unique description",
-	HostedZoneConfig: HostedZoneConfig{
-		Comment: "optional comment",
-	},
-}
-
-func TestCreateHostedZoneXML(t *testing.T) {
-	responseXML, err := createHostedZoneXML(zoneRequest)
-	if err != nil {
-		t.Fatal("Error:", err)
-	}
-
-	if string(responseXML) != createHostedZoneRequest {
-		t.Fatal("returned XML is incorrectly formatted", responseXML)
-	}
 }
 
 var resourceRecordSets = RecordSetsRequest{

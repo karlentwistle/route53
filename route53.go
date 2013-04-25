@@ -30,24 +30,6 @@ type AccessIdentifiers struct {
 	time      time.Time
 }
 
-// createHostedZoneRequest
-type ZoneRequest struct {
-	XMLName          xml.Name
-	Name             string
-	CallerReference  string
-	HostedZoneConfig HostedZoneConfig
-}
-
-type HostedZoneConfig struct {
-	Comment string
-}
-
-type HostedZone struct {
-	AccessIdentifiers AccessIdentifiers
-	HostedZoneRequest ZoneRequest
-	Endpoint          string
-}
-
 // changeResourceRecordSets
 type RecordSet struct {
 	AccessIdentifiers AccessIdentifiers
@@ -82,43 +64,17 @@ type ResourceRecord struct {
 	Value string
 }
 
-// Create Hosted Zone
-func (c *HostedZone) CreateHostedZone() (req *http.Response, err error) {
-	if c.Endpoint == "" {
-		c.Endpoint = Route53URL + `hostedzone`
-	}
-	postData, err := createHostedZoneXML(c.HostedZoneRequest)
-	if err != nil {
-		return nil, err
-	}
-	req, err = remotePost(c, postData)
-	return
-}
-
-func createHostedZoneXML(hostedZoneRequest ZoneRequest) (response string, err error) {
-	hostedZoneRequest.XMLName = xml.Name{
-		Space: endpoint + `/doc/` + api + `/`,
-		Local: "CreateHostedZoneRequest",
-	}
-	byteXML, err := xml.MarshalIndent(hostedZoneRequest, "", `   `)
-	if err != nil {
-		return "", err
-	}
-	response = xml.Header + string(byteXML)
-	return
-}
-
 func createResourceRecordSetsXML(resourceRecordSetsRequest RecordSetsRequest) (response string, err error) {
-	resourceRecordSetsRequest.XMLName = xml.Name{
-		Space: endpoint + `/doc/` + api + `/`,
-		Local: "ChangeResourceRecordSetsRequest",
-	}
-	byteXML, err := xml.MarshalIndent(resourceRecordSetsRequest, "", `   `)
-	if err != nil {
-		return "", err
-	}
-	response = xml.Header + string(byteXML)
-	return
+  resourceRecordSetsRequest.XMLName = xml.Name{
+    Space: endpoint + `/doc/` + api + `/`,
+    Local: "ChangeResourceRecordSetsRequest",
+  }
+  byteXML, err := xml.MarshalIndent(resourceRecordSetsRequest, "", `   `)
+  if err != nil {
+    return "", err
+  }
+  response = xml.Header + string(byteXML)
+  return
 }
 
 func remoteTime(url string) (time string, err error) {
@@ -143,6 +99,7 @@ func (a *AccessIdentifiers) CreateSignature() (sha string) {
 	if !a.time.IsZero() {
 		a.time = time.Now()
 	}
+
 	time := a.time.UTC().Format(time.ANSIC)
 	hash := hmac.New(sha256.New, []byte(a.SecretKey))
 	hash.Write([]byte(time))
@@ -155,6 +112,7 @@ func (a *AccessIdentifiers) CreateHeaders() http.Header {
 	if !a.time.IsZero() {
 		a.time = time.Now()
 	}
+
 	signature := a.CreateSignature()
 	h := http.Header{}
 	h.Add("Date", a.time.UTC().Format(time.ANSIC))
@@ -164,13 +122,13 @@ func (a *AccessIdentifiers) CreateHeaders() http.Header {
 	return h
 }
 
-func remotePost(c *HostedZone, postData string) (*http.Response, error) {
-	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewReader([]byte(postData)))
+func RemotePost(url string, postData string) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url,bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = c.AccessIdentifiers.CreateHeaders()
+	//  req.Header = c.AccessIdentifiers.CreateHeaders()
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -180,3 +138,5 @@ func remotePost(c *HostedZone, postData string) (*http.Response, error) {
 
 	return res, err
 }
+
+
