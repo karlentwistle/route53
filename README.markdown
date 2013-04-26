@@ -39,7 +39,7 @@ Change Resource Record Sets (You can set the action to CREATE or DELETE)
     
     func main() {
       
-      var resourceRecordSets = ChangeResourceRecordSetsRequest{
+      var resourceRecordSets = route53.ChangeResourceRecordSetsRequest{
         Comment: "optional comment",
         Changes: []Change{
           {
@@ -48,7 +48,6 @@ Change Resource Record Sets (You can set the action to CREATE or DELETE)
             Type:          "DNS record type",
             TTL:           300,
             Value:         "applicable value for the record type",
-            HealthCheckId: "optional ID of a Route 53 health check",
           },
         },
       }

@@ -3,6 +3,7 @@ package route53
 import (
 	"encoding/xml"
 	"net/http"
+  "fmt"
 )
 
 type ChangeResourceRecordSetsRequest struct {
@@ -18,7 +19,6 @@ type Change struct {
 	Type          string `xml:"ResourceRecordSet>Type"`
 	TTL           int    `xml:"ResourceRecordSet>TTL"`
 	Value         string `xml:"ResourceRecordSet>ResourceRecords>ResourceRecord>Value"`
-	HealthCheckId string `xml:"ResourceRecordSet>HealthCheckId"`
 }
 
 func (c *ChangeResourceRecordSetsRequest) XML() (s string, err error) {
@@ -36,7 +36,8 @@ func (c *ChangeResourceRecordSetsRequest) Create(a AccessIdentifiers) (req *http
 	if err != nil {
 		return nil, err
 	}
-	url := postURL + c.ZoneID + `/rrset`
+	url := postURL + `/` + c.ZoneID + `/rrset`
+  fmt.Println(url)
 	req, err = RemotePost(url, postData, a)
 	return
 }

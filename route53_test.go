@@ -119,7 +119,6 @@ const changeResourceRecordSets = `<?xml version="1.0" encoding="UTF-8"?>
                      <Value>applicable value for the record type</Value>
                   </ResourceRecord>
                </ResourceRecords>
-               <HealthCheckId>optional ID of a Route 53 health check</HealthCheckId>
             </ResourceRecordSet>
          </Change>
       </Changes>
@@ -135,7 +134,6 @@ var resourceRecordSets = ChangeResourceRecordSetsRequest{
 			Type:          "DNS record type",
 			TTL:           300,
 			Value:         "applicable value for the record type",
-			HealthCheckId: "optional ID of a Route 53 health check",
 		},
 	},
 }
