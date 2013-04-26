@@ -8,31 +8,6 @@ import (
 	"time"
 )
 
-
-const changeResourceRecordSets = `<?xml version="1.0" encoding="UTF-8"?>
-
-<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
-   <ChangeBatch>
-      <Comment>optional comment about the changes in this change batch request</Comment>
-      <Changes>
-         <Change>
-            <Action>CREATE</Action>
-            <ResourceRecordSet>
-               <Name>DNS domain name</Name>
-               <Type>DNS record type</Type>
-               <TTL>300</TTL>
-               <ResourceRecords>
-                  <ResourceRecord>
-                     <Value>applicable value for the record type</Value>
-                  </ResourceRecord>
-               </ResourceRecords>
-               <HealthCheckId>optional ID of a Route 53 health check</HealthCheckId>
-            </ResourceRecordSet>
-         </Change>
-      </Changes>
-   </ChangeBatch>
-</ChangeResourceRecordSetsRequest>`
-
 var t time.Time
 var accessIdentifiers = AccessIdentifiers{AccessKey: "foo", SecretKey: "bar", time: t.Add(2)}
 
@@ -109,18 +84,69 @@ const createHostedZoneRequest = `<?xml version="1.0" encoding="UTF-8"?>
 </CreateHostedZoneRequest>`
 
 var zoneRequest = CreateHostedZoneRequest{
-  Name:            "DNS domain name",
-  CallerReference: "unique description",
-  Comment: "optional comment",
+	Name:            "DNS domain name",
+	CallerReference: "unique description",
+	Comment:         "optional comment",
 }
 
-func TestCreateHostedZoneXML(t *testing.T) {  
-  responseXML, err := zoneRequest.XML()
-  if err != nil {
-    t.Fatal("Error:", err)
-  }
+func TestCreateHostedZoneXML(t *testing.T) {
+	responseXML, err := zoneRequest.XML()
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
 
-  if responseXML != createHostedZoneRequest {
-    t.Fatal("returned XML is incorrectly formatted", responseXML, createHostedZoneRequest)
-  }
+	if responseXML != createHostedZoneRequest {
+		t.Fatal("returned XML is incorrectly formatted", responseXML, createHostedZoneRequest)
+	}
+}
+
+////////////// resource_record ////////////// 
+
+const changeResourceRecordSets = `<?xml version="1.0" encoding="UTF-8"?>
+
+<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
+   <ChangeBatch>
+      <Comment>optional comment</Comment>
+      <Changes>
+         <Change>
+            <Action>CREATE</Action>
+            <ResourceRecordSet>
+               <Name>DNS domain name</Name>
+               <Type>DNS record type</Type>
+               <TTL>300</TTL>
+               <ResourceRecords>
+                  <ResourceRecord>
+                     <Value>applicable value for the record type</Value>
+                  </ResourceRecord>
+               </ResourceRecords>
+               <HealthCheckId>optional ID of a Route 53 health check</HealthCheckId>
+            </ResourceRecordSet>
+         </Change>
+      </Changes>
+   </ChangeBatch>
+</ChangeResourceRecordSetsRequest>`
+
+var resourceRecordSets = ChangeResourceRecordSetsRequest{
+	Comment: "optional comment",
+	Changes: []Change{
+		{
+			Action:        "CREATE",
+			Name:          "DNS domain name",
+			Type:          "DNS record type",
+			TTL:           300,
+			Value:         "applicable value for the record type",
+			HealthCheckId: "optional ID of a Route 53 health check",
+		},
+	},
+}
+
+func TestCreateResourceRecordSetsXML(t *testing.T) {
+	responseXML, err := resourceRecordSets.XML()
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
+
+	if string(responseXML) != changeResourceRecordSets {
+		t.Fatal("returned XML is incorrectly formatted", responseXML)
+	}
 }

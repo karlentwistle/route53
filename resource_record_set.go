@@ -1,52 +1,42 @@
 package route53
 
 import (
-  
+	"encoding/xml"
+	"net/http"
 )
 
-// // changeResourceRecordSets
-// type RecordSet struct {
-//   AccessIdentifiers AccessIdentifiers
-//   RecordSetsRequest RecordSetsRequest
-//   Endpoint          string
-// }
+type ChangeResourceRecordSetsRequest struct {
+	ZoneID  string   `xml:"-"`
+	Comment string   `xml:"ChangeBatch>Comment"`
+	Changes []Change `xml:"ChangeBatch>Changes>Change"`
+	Xmlns   string   `xml:"xmlns,attr"`
+}
 
-// type RecordSetsRequest struct {
-//   XMLName     xml.Name
-//   ChangeBatch ChangeBatch
-// }
+type Change struct {
+	Action        string
+	Name          string `xml:"ResourceRecordSet>Name"`
+	Type          string `xml:"ResourceRecordSet>Type"`
+	TTL           int    `xml:"ResourceRecordSet>TTL"`
+	Value         string `xml:"ResourceRecordSet>ResourceRecords>ResourceRecord>Value"`
+	HealthCheckId string `xml:"ResourceRecordSet>HealthCheckId"`
+}
 
-// type ChangeBatch struct {
-//   Comment string
-//   Changes []Change `xml:"Changes>Change"`
-// }
+func (c *ChangeResourceRecordSetsRequest) XML() (s string, err error) {
+	c.Xmlns = `https://route53.amazonaws.com/doc/2012-12-12/`
+	byteXML, err := xml.MarshalIndent(c, "", `   `)
+	if err != nil {
+		return "", err
+	}
+	s = xml.Header + string(byteXML)
+	return
+}
 
-// type Change struct {
-//   Action            string
-//   ResourceRecordSet ResourceRecordSet
-// }
-
-// type ResourceRecordSet struct {
-//   Name            string
-//   Type            string
-//   TTL             int
-//   ResourceRecords []ResourceRecord `xml:"ResourceRecords>ResourceRecord"`
-//   HealthCheckId   string
-// }
-
-// type ResourceRecord struct {
-//   Value string
-// }
-
-// func createResourceRecordSetsXML(resourceRecordSetsRequest RecordSetsRequest) (response string, err error) {
-//   resourceRecordSetsRequest.XMLName = xml.Name{
-//     Space: endpoint + `/doc/` + api + `/`,
-//     Local: "ChangeResourceRecordSetsRequest",
-//   }
-//   byteXML, err := xml.MarshalIndent(resourceRecordSetsRequest, "", `   `)
-//   if err != nil {
-//     return "", err
-//   }
-//   response = xml.Header + string(byteXML)
-//   return
-// }
+func (c *ChangeResourceRecordSetsRequest) Create(a AccessIdentifiers) (req *http.Response, err error) {
+	postData, err := c.XML()
+	if err != nil {
+		return nil, err
+	}
+	url := postURL + c.ZoneID + `/rrset`
+	req, err = RemotePost(url, postData, a)
+	return
+}

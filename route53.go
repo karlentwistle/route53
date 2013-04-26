@@ -18,10 +18,7 @@ import (
 	"time"
 )
 
-const endpoint = `https://route53.amazonaws.com`
-const api = `2012-12-12`
-const Route53URL = endpoint + `/` + api + `/`
-const requestExpired = `RequestExpired`
+const postURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
 
 type AccessIdentifiers struct {
 	AccessKey string
@@ -71,7 +68,7 @@ func (a *AccessIdentifiers) CreateHeaders() http.Header {
 }
 
 func RemotePost(url string, postData string, a AccessIdentifiers) (*http.Response, error) {
-	req, err := http.NewRequest("POST", url,bytes.NewReader([]byte(postData)))
+	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
@@ -84,5 +81,3 @@ func RemotePost(url string, postData string, a AccessIdentifiers) (*http.Respons
 
 	return res, err
 }
-
-

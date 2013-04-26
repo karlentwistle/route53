@@ -5,13 +5,11 @@ import (
 	"net/http"
 )
 
-const postURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
-
 type CreateHostedZoneRequest struct {
-    Name            string
-    CallerReference string
-    Comment         string `xml:"HostedZoneConfig>Comment"`
-    Xmlns           string `xml:"xmlns,attr"`
+	Name            string
+	CallerReference string
+	Comment         string `xml:"HostedZoneConfig>Comment"`
+	Xmlns           string `xml:"xmlns,attr"`
 }
 
 func (hz *CreateHostedZoneRequest) XML() (s string, err error) {
@@ -21,7 +19,7 @@ func (hz *CreateHostedZoneRequest) XML() (s string, err error) {
 		return "", err
 	}
 	s = xml.Header + string(byteXML)
-	return	
+	return
 }
 
 func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Response, err error) {
