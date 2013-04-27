@@ -54,6 +54,20 @@ func TestRemoteTime(t *testing.T) {
 	}
 }
 
+func TestGetBody(t *testing.T) {
+	handler := &emptyHandler{}
+	server := httptest.NewServer(handler)
+	resp, err := getBody(server.URL, nil)
+
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
+
+	if string(resp) != "hello, world!\n" {
+		t.Fatal("remote body did not return correctly", resp)
+	}
+}
+
 func TestAwsRequestHeaders(t *testing.T) {
 	awsHeaders := accessIdentifiers.headers()
 
