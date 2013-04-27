@@ -27,6 +27,6 @@ func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Respon
 	if err != nil {
 		return nil, err
 	}
-	req, err = RemotePost(postURL, postData, a)
+	req, err = post(postURL, postData, a.headers())
 	return
 }

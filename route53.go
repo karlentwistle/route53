@@ -11,23 +11,14 @@ package route53
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
+	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 const postURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
 
-type AccessIdentifiers struct {
-	AccessKey string
-	SecretKey string
-	time      time.Time
-}
-
 func remoteTime(url string) (time string, err error) {
-	headers, err := remoteHeaders(url)
+	headers, err := getHeaders(url)
 	if err != nil {
 		return time, err
 	}
@@ -35,7 +26,7 @@ func remoteTime(url string) (time string, err error) {
 	return
 }
 
-func remoteHeaders(url string) (http.Header, error) {
+func getHeaders(url string) (http.Header, error) {
 	resp, err := http.Head(url)
 	if err != nil {
 		return nil, err
@@ -43,36 +34,12 @@ func remoteHeaders(url string) (http.Header, error) {
 	return resp.Header, nil
 }
 
-func (a *AccessIdentifiers) CreateSignature() (sha string) {
-	if a.time.IsZero() {
-		a.time = time.Now()
-	}
-	time := a.time.UTC().Format(time.ANSIC)
-	hash := hmac.New(sha256.New, []byte(a.SecretKey))
-	hash.Write([]byte(time))
-	sha = base64.StdEncoding.EncodeToString(hash.Sum(nil))
-	return
-}
-
-func (a *AccessIdentifiers) CreateHeaders() http.Header {
-	if a.time.IsZero() {
-		a.time = time.Now()
-	}
-	signature := a.CreateSignature()
-	h := http.Header{}
-	h.Add("Date", a.time.UTC().Format(time.ANSIC))
-	h.Add("Content-Type", "text/xml; charset=UTF-8")
-	h.Add("X-Amzn-Authorization",
-		"AWS3-HTTPS AWSAccessKeyId="+a.AccessKey+",Algorithm=HmacSHA256,Signature="+signature)
-	return h
-}
-
-func RemotePost(url string, postData string, a AccessIdentifiers) (*http.Response, error) {
+func post(url string, postData string, headers http.Header) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(postData)))
 	if err != nil {
 		return nil, err
 	}
-	req.Header = a.CreateHeaders()
+	req.Header = headers
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -80,4 +47,18 @@ func RemotePost(url string, postData string, a AccessIdentifiers) (*http.Respons
 	}
 
 	return res, err
+}
+
+func getBody(url string, headers http.Header) ([]byte, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		req.Header = headers
+		resp, err := client.Do(req)
+		defer resp.Body.Close()
+		if err != nil {
+			return ioutil.ReadAll(resp.Body)
+		}
+	}
+	return nil, err
 }

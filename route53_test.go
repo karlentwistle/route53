@@ -20,7 +20,7 @@ func (h *emptyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestSignature(t *testing.T) {
-	response := accessIdentifiers.CreateSignature()
+	response := accessIdentifiers.signature()
 	if response != "TlXhIyeN+etmLEuVWrz4i+deyqGhDs5P/9wLYq6IyHE=" {
 		t.Fatal("incorrect signature encoding", response)
 	}
@@ -29,7 +29,7 @@ func TestSignature(t *testing.T) {
 func TestRemoteHeaders(t *testing.T) {
 	handler := &emptyHandler{}
 	server := httptest.NewServer(handler)
-	headers, err := remoteHeaders(server.URL)
+	headers, err := getHeaders(server.URL)
 
 	if err != nil {
 		t.Fatal("Error:", err)
@@ -55,7 +55,7 @@ func TestRemoteTime(t *testing.T) {
 }
 
 func TestAwsRequestHeaders(t *testing.T) {
-	awsHeaders := accessIdentifiers.CreateHeaders()
+	awsHeaders := accessIdentifiers.headers()
 
 	if awsHeaders.Get("Date") != accessIdentifiers.time.UTC().Format(time.ANSIC) {
 		t.Fatal("incorrect Date in headers", awsHeaders)
@@ -129,11 +129,11 @@ var resourceRecordSets = ChangeResourceRecordSetsRequest{
 	Comment: "optional comment",
 	Changes: []Change{
 		{
-			Action:        "CREATE",
-			Name:          "DNS domain name",
-			Type:          "DNS record type",
-			TTL:           300,
-			Value:         "applicable value for the record type",
+			Action: "CREATE",
+			Name:   "DNS domain name",
+			Type:   "DNS record type",
+			TTL:    300,
+			Value:  "applicable value for the record type",
 		},
 	},
 }
@@ -146,5 +146,63 @@ func TestCreateResourceRecordSetsXML(t *testing.T) {
 
 	if string(responseXML) != changeResourceRecordSets {
 		t.Fatal("returned XML is incorrectly formatted", responseXML)
+	}
+}
+
+////////////// read remote zones ////////////// 
+
+const ListHostedZonesResponse = `<?xml version="1.0"?>
+<ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
+  <HostedZones>
+    <HostedZone>
+      <Id>/hostedzone/foo</Id>
+      <Name>foo.who.com.</Name>
+      <CallerReference>F2FCD646</CallerReference>
+      <Config />
+      <ResourceRecordSetCount>4</ResourceRecordSetCount>
+    </HostedZone>
+    <HostedZone>
+      <Id>/hostedzone/mho</Id>
+      <Name>mho.woo.com.</Name>
+      <CallerReference>96BA065A</CallerReference>
+      <Config />
+      <ResourceRecordSetCount>6</ResourceRecordSetCount>
+    </HostedZone>
+  </HostedZones>
+</ListHostedZonesResponse>`
+
+func TestGenerateZones(t *testing.T) {
+	hostedZones := generateZones([]byte(ListHostedZonesResponse))
+
+	if hostedZones.HostedZone[0].Id != "/hostedzone/foo" {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[0].Name != "foo.who.com." {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[0].CallerReference != "F2FCD646" {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[0].RecordSetCount != 4 {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[1].Id != "/hostedzone/mho" {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[1].Name != "mho.woo.com." {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[1].CallerReference != "96BA065A" {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+	}
+
+	if hostedZones.HostedZone[1].RecordSetCount != 6 {
+		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
 	}
 }
