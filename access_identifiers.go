@@ -58,10 +58,10 @@ func (a *AccessIdentifiers) Zones() (h HostedZones) {
 	return h
 }
 
-func (a *AccessIdentifiers) zoneXML(url string) (s []byte, err error) {
-	s, err = getBody(postURL+"?maxitems=100", a.headers())
+func (a *AccessIdentifiers) zoneXML(url string) ([]byte, error) {
+	resp, err := getBody(postURL+"?maxitems=100", a.headers())
 	if err == nil {
-		return s, err
+		return resp, err
 	}
 	return nil, err
 }

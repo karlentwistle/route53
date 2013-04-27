@@ -52,11 +52,11 @@ func post(url string, postData string, headers http.Header) (*http.Response, err
 func getBody(url string, headers http.Header) ([]byte, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
+	if err == nil {
 		req.Header = headers
 		resp, err := client.Do(req)
 		defer resp.Body.Close()
-		if err != nil {
+		if err == nil {
 			return ioutil.ReadAll(resp.Body)
 		}
 	}
