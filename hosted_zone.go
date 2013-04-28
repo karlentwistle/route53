@@ -42,3 +42,17 @@ type HostedZone struct {
 	RecordSetCount  int    `xml:"ResourceRecordSetCount"`
 }
 
+func (hz *HostedZone) ResourceRecordSets(a AccessIdentifiers) (r ResourceRecordSets, err error) {
+	var url string
+	if a.endpoint == "" {
+		url = awsURL + "/" + hz.Id + "/rrset"
+	} else {
+		url = a.endpoint
+	}
+
+	resp, err := getBody(url, a.headers())
+	if err == nil {
+		return generateResourceRecordSet(resp), nil
+	}
+	return r, err
+}

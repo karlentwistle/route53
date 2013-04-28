@@ -39,3 +39,14 @@ func (c *ChangeResourceRecordSetsRequest) Create(a AccessIdentifiers) (req *http
 	req, err = post(url, postData, a.headers())
 	return
 }
+
+type ResourceRecordSets struct {
+	ResourceRecordSets []ResourceRecordSet `xml:"ResourceRecordSets>ResourceRecordSet"`
+}
+
+type ResourceRecordSet struct {
+	Name  string   `xml:"Name"`
+	Type  string   `xml:"Type"`
+	TTL   int      `xml:"TTL"`
+	Value []string `xml:"ResourceRecords>ResourceRecord>Value"`
+}

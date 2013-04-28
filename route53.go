@@ -11,9 +11,9 @@ package route53
 
 import (
 	"bytes"
+	"encoding/xml"
 	"io/ioutil"
 	"net/http"
-	"encoding/xml"
 )
 
 const awsURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
@@ -22,6 +22,12 @@ func generateZones(data []byte) HostedZones {
 	zones := HostedZones{}
 	xml.Unmarshal(data, &zones)
 	return zones
+}
+
+func generateResourceRecordSet(data []byte) ResourceRecordSets {
+	recordSets := ResourceRecordSets{}
+	xml.Unmarshal(data, &recordSets)
+	return recordSets
 }
 
 func remoteTime(url string) (time string, err error) {

@@ -227,5 +227,50 @@ func TestAccessIdentifiersZones(t *testing.T) {
 	if len(hostedZones.HostedZone) != 2 {
 		t.Fatal("Error reading remote hostedZones", hostedZones)
 	}
+}
+
+////////////// list resource record sets ////////////// 
+
+func TestGenerateResourceRecordSet(t *testing.T) {
+	response_xml, err := ioutil.ReadFile("spec/fixtures/list_resource_record_sets.xml")
+
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
+
+	recordSets := generateResourceRecordSet(response_xml)
+
+	if recordSets.ResourceRecordSets[0].Name != "entwistle.info." {
+		t.Fatal("XML Unmarshal incorrectly", recordSets)
+	}
+
+	if recordSets.ResourceRecordSets[5].Name != "karl.entwistle.info." {
+		t.Fatal("XML Unmarshal incorrectly", recordSets)
+	}
+
+	if recordSets.ResourceRecordSets[6].TTL != 86400 {
+		t.Fatal("XML Unmarshal incorrectly", recordSets)
+	}
+}
+
+func TestHostedZoneResourceRecordSets(t *testing.T) {
+	handler := &webHandler{
+		location: "spec/fixtures/list_resource_record_sets.xml",
+	}
+	server := httptest.NewServer(handler)
+	accessIdentifiers := accessIdentifiers
+	accessIdentifiers.endpoint = server.URL
+
+	hostedZone := HostedZone{}
+
+	recordSets, err := hostedZone.ResourceRecordSets(accessIdentifiers)
+
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
+
+	if len(recordSets.ResourceRecordSets) != 8 {
+		t.Fatal("Error reading remote ResourceRecordSets", recordSets)
+	}
 
 }

@@ -57,4 +57,3 @@ func (a *AccessIdentifiers) zoneXML(url string) ([]byte, error) {
 	}
 	return nil, err
 }
-
