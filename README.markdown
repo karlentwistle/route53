@@ -18,9 +18,12 @@ Please find examples within the examples directory
 
 ## TODO ##
 
+-   Add Example How Get Resource Record Sets
+-   Grab Time From Amazon When Host Time incorrect
 -   Better Error Handling
 -   Create / Delete to be moved to act on Resource Record Sets
 -   Add HealthChecks
+
 
 ## License ##
 
