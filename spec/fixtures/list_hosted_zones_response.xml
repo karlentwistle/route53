@@ -2,14 +2,14 @@
 <ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
   <HostedZones>
     <HostedZone>
-      <Id>/hostedzone/foo</Id>
+      <Id>/hostedzone/Z2CODL4TLWAY</Id>
       <Name>foo.who.com.</Name>
       <CallerReference>F2FCD646</CallerReference>
       <Config />
       <ResourceRecordSetCount>4</ResourceRecordSetCount>
     </HostedZone>
     <HostedZone>
-      <Id>/hostedzone/mho</Id>
+      <Id>/hostedzone/Z1CODL4TLWAY</Id>
       <Name>mho.woo.com.</Name>
       <CallerReference>96BA065A</CallerReference>
       <Config />

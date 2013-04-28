@@ -3,6 +3,7 @@ package route53
 import (
 	"encoding/xml"
 	"net/http"
+	"strings"
 )
 
 type CreateHostedZoneRequest struct {
@@ -42,10 +43,18 @@ type HostedZone struct {
 	RecordSetCount  int    `xml:"ResourceRecordSetCount"`
 }
 
+func (hz *HostedZone) HostedZoneId() string {
+	s := strings.Split(hz.Id, "/")
+	if len(s) == 3 {
+		return s[2]
+	}
+	return ""
+}
+
 func (hz *HostedZone) ResourceRecordSets(a AccessIdentifiers) (r ResourceRecordSets, err error) {
 	var url string
 	if a.endpoint == "" {
-		url = awsURL + "/" + hz.Id + "/rrset"
+		url = awsURL + "/" + hz.HostedZoneId() + "/rrset"
 	} else {
 		url = a.endpoint
 	}

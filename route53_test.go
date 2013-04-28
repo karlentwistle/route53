@@ -182,7 +182,7 @@ func TestGenerateZones(t *testing.T) {
 
 	hostedZones := generateZones(response_xml)
 
-	if hostedZones.HostedZone[0].Id != "/hostedzone/foo" {
+	if hostedZones.HostedZone[0].Id != "/hostedzone/Z2CODL4TLWAY" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
@@ -198,7 +198,7 @@ func TestGenerateZones(t *testing.T) {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[1].Id != "/hostedzone/mho" {
+	if hostedZones.HostedZone[1].Id != "/hostedzone/Z1CODL4TLWAY" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
@@ -226,6 +226,18 @@ func TestAccessIdentifiersZones(t *testing.T) {
 
 	if len(hostedZones.HostedZone) != 2 {
 		t.Fatal("Error reading remote hostedZones", hostedZones)
+	}
+}
+
+func TestHostedZoneId(t *testing.T) {
+	hostedZone := HostedZone{Id: "/exploding error"}
+	if hostedZone.HostedZoneId() != "" {
+		t.Fatal("Incorrectly formatted HostedZoneId", hostedZone)
+	}
+
+	hostedZone = HostedZone{Id: "/hostedzone/Z1CODL4TLWAY"}
+	if hostedZone.HostedZoneId() != "Z1CODL4TLWAY" {
+		t.Fatal("Incorrectly formatted HostedZoneId", hostedZone)
 	}
 }
 
