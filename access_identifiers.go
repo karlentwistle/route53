@@ -13,6 +13,7 @@ type AccessIdentifiers struct {
 	AccessKey string
 	SecretKey string
 	time      time.Time
+	endpoint  string
 }
 
 func (a *AccessIdentifiers) signature() (sha string) {
@@ -51,7 +52,10 @@ type HostedZone struct {
 }
 
 func (a *AccessIdentifiers) Zones() (h HostedZones) {
-	res, err := a.zoneXML(postURL + "?maxitems=100")
+	if a.endpoint == "" {
+		a.endpoint = awsURL + "?maxitems=100"
+	}
+	res, err := a.zoneXML(a.endpoint)
 	if err == nil {
 		return generateZones(res)
 	}
@@ -59,7 +63,7 @@ func (a *AccessIdentifiers) Zones() (h HostedZones) {
 }
 
 func (a *AccessIdentifiers) zoneXML(url string) ([]byte, error) {
-	resp, err := getBody(postURL+"?maxitems=100", a.headers())
+	resp, err := getBody(url, a.headers())
 	if err == nil {
 		return resp, err
 	}

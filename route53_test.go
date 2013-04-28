@@ -2,6 +2,7 @@ package route53
 
 import (
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,12 +12,19 @@ import (
 var t time.Time
 var accessIdentifiers = AccessIdentifiers{AccessKey: "foo", SecretKey: "bar", time: t.Add(2)}
 
-type emptyHandler struct{}
+type webHandler struct {
+	location string
+}
 
-func (h *emptyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Test-Header", "Testing")
 	w.Header().Set("Date", time.Now().Format(time.RFC1123))
-	io.WriteString(w, "hello, world!\n")
+	if h.location == "" {
+		io.WriteString(w, "hello, world!\n")
+	} else {
+		content, _ := ioutil.ReadFile(h.location)
+		io.WriteString(w, string(content))
+	}
 }
 
 func TestSignature(t *testing.T) {
@@ -27,7 +35,7 @@ func TestSignature(t *testing.T) {
 }
 
 func TestRemoteHeaders(t *testing.T) {
-	handler := &emptyHandler{}
+	handler := &webHandler{}
 	server := httptest.NewServer(handler)
 	headers, err := getHeaders(server.URL)
 
@@ -41,7 +49,7 @@ func TestRemoteHeaders(t *testing.T) {
 }
 
 func TestRemoteTime(t *testing.T) {
-	handler := &emptyHandler{}
+	handler := &webHandler{}
 	server := httptest.NewServer(handler)
 	remoteTime, err := remoteTime(server.URL)
 
@@ -55,7 +63,7 @@ func TestRemoteTime(t *testing.T) {
 }
 
 func TestGetBody(t *testing.T) {
-	handler := &emptyHandler{}
+	handler := &webHandler{}
 	server := httptest.NewServer(handler)
 	resp, err := getBody(server.URL, nil)
 
@@ -165,58 +173,59 @@ func TestCreateResourceRecordSetsXML(t *testing.T) {
 
 ////////////// read remote zones ////////////// 
 
-const ListHostedZonesResponse = `<?xml version="1.0"?>
-<ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
-  <HostedZones>
-    <HostedZone>
-      <Id>/hostedzone/foo</Id>
-      <Name>foo.who.com.</Name>
-      <CallerReference>F2FCD646</CallerReference>
-      <Config />
-      <ResourceRecordSetCount>4</ResourceRecordSetCount>
-    </HostedZone>
-    <HostedZone>
-      <Id>/hostedzone/mho</Id>
-      <Name>mho.woo.com.</Name>
-      <CallerReference>96BA065A</CallerReference>
-      <Config />
-      <ResourceRecordSetCount>6</ResourceRecordSetCount>
-    </HostedZone>
-  </HostedZones>
-</ListHostedZonesResponse>`
-
 func TestGenerateZones(t *testing.T) {
-	hostedZones := generateZones([]byte(ListHostedZonesResponse))
+	response_xml, err := ioutil.ReadFile("spec/fixtures/list_hosted_zones_response.xml")
+
+	if err != nil {
+		t.Fatal("Error:", err)
+	}
+
+	hostedZones := generateZones(response_xml)
 
 	if hostedZones.HostedZone[0].Id != "/hostedzone/foo" {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[0].Name != "foo.who.com." {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[0].CallerReference != "F2FCD646" {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[0].RecordSetCount != 4 {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[1].Id != "/hostedzone/mho" {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[1].Name != "mho.woo.com." {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[1].CallerReference != "96BA065A" {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
 	if hostedZones.HostedZone[1].RecordSetCount != 6 {
-		t.Fatal("XML Unmarshal incorrectly", ListHostedZonesResponse)
+		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
+}
+
+func TestAccessIdentifiersZones(t *testing.T) {
+	handler := &webHandler{
+		location: "spec/fixtures/list_hosted_zones_response.xml",
+	}
+	server := httptest.NewServer(handler)
+	accessIdentifiers := accessIdentifiers
+	accessIdentifiers.endpoint = server.URL
+	hostedZones := accessIdentifiers.Zones()
+
+	if len(hostedZones.HostedZone) != 2 {
+		t.Fatal("Error reading remote hostedZones", hostedZones)
+	}
+
 }

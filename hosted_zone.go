@@ -27,6 +27,6 @@ func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Respon
 	if err != nil {
 		return nil, err
 	}
-	req, err = post(postURL, postData, a.headers())
+	req, err = post(awsURL, postData, a.headers())
 	return
 }

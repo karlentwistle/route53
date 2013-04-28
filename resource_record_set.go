@@ -35,7 +35,7 @@ func (c *ChangeResourceRecordSetsRequest) Create(a AccessIdentifiers) (req *http
 	if err != nil {
 		return nil, err
 	}
-	url := postURL + `/` + c.ZoneID + `/rrset`
+	url := awsURL + `/` + c.ZoneID + `/rrset`
 	req, err = post(url, postData, a.headers())
 	return
 }

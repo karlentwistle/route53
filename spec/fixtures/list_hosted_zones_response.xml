@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2012-12-12/">
+  <HostedZones>
+    <HostedZone>
+      <Id>/hostedzone/foo</Id>
+      <Name>foo.who.com.</Name>
+      <CallerReference>F2FCD646</CallerReference>
+      <Config />
+      <ResourceRecordSetCount>4</ResourceRecordSetCount>
+    </HostedZone>
+    <HostedZone>
+      <Id>/hostedzone/mho</Id>
+      <Name>mho.woo.com.</Name>
+      <CallerReference>96BA065A</CallerReference>
+      <Config />
+      <ResourceRecordSetCount>6</ResourceRecordSetCount>
+    </HostedZone>
+  </HostedZones>
+</ListHostedZonesResponse>

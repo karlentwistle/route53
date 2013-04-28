@@ -6,7 +6,7 @@ This was created to scratch my own itch and I use it in conjunction with my Goog
 
 Example Usage
 
-Get Zones
+  
 
     package main
 

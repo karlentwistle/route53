@@ -15,7 +15,7 @@ import (
 	"net/http"
 )
 
-const postURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
+const awsURL = `https://route53.amazonaws.com/2012-12-12/hostedzone`
 
 func remoteTime(url string) (time string, err error) {
 	headers, err := getHeaders(url)
