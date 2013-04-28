@@ -30,3 +30,15 @@ func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Respon
 	req, err = post(awsURL, postData, a.headers())
 	return
 }
+
+type HostedZones struct {
+	HostedZone []HostedZone `xml:"HostedZones>HostedZone"`
+}
+
+type HostedZone struct {
+	Id              string `xml:"Id"`
+	Name            string `xml:"Name"`
+	CallerReference string `xml:"CallerReference"`
+	RecordSetCount  int    `xml:"ResourceRecordSetCount"`
+}
+

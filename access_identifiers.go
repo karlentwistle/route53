@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/xml"
 	"net/http"
 	"time"
 )
@@ -40,17 +39,6 @@ func (a *AccessIdentifiers) headers() http.Header {
 	return h
 }
 
-type HostedZones struct {
-	HostedZone []HostedZone `xml:"HostedZones>HostedZone"`
-}
-
-type HostedZone struct {
-	Id              string `xml:"Id"`
-	Name            string `xml:"Name"`
-	CallerReference string `xml:"CallerReference"`
-	RecordSetCount  int    `xml:"ResourceRecordSetCount"`
-}
-
 func (a *AccessIdentifiers) Zones() (h HostedZones) {
 	if a.endpoint == "" {
 		a.endpoint = awsURL + "?maxitems=100"
@@ -70,8 +58,3 @@ func (a *AccessIdentifiers) zoneXML(url string) ([]byte, error) {
 	return nil, err
 }
 
-func generateZones(data []byte) HostedZones {
-	zones := HostedZones{}
-	xml.Unmarshal(data, &zones)
-	return zones
-}
