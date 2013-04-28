@@ -4,9 +4,9 @@
 
 This was created to scratch my own itch and I use it in conjunction with my Google Go program https://github.com/karlentwistle/routemaster. This is not feature complete and is missing HealthChecks
 
-Example Usage
+## Example Usage ##
 
-  
+### List Zones Associated With AWS Account ###
 
     package main
 
@@ -25,7 +25,7 @@ Example Usage
         
     }
 
-Create A New Zone
+### Create A New Zone ###
 
     package main
 
@@ -48,7 +48,7 @@ Create A New Zone
         
     }
 
-Change Resource Record Sets (You can set the action to CREATE or DELETE)
+### Change Resource Record Sets (You can set the action to CREATE or DELETE) ###
 
     package main
 

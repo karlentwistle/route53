@@ -40,10 +40,13 @@ func (a *AccessIdentifiers) headers() http.Header {
 }
 
 func (a *AccessIdentifiers) Zones() (h HostedZones) {
+	var url string
 	if a.endpoint == "" {
-		a.endpoint = awsURL + "?maxitems=100"
+		url = awsURL + "?maxitems=100"
+	} else {
+		url = a.endpoint
 	}
-	res, err := a.zoneXML(a.endpoint)
+	res, err := a.zoneXML(url)
 	if err == nil {
 		return generateZones(res)
 	}

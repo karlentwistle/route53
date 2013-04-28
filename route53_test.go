@@ -220,9 +220,9 @@ func TestAccessIdentifiersZones(t *testing.T) {
 		location: "spec/fixtures/list_hosted_zones_response.xml",
 	}
 	server := httptest.NewServer(handler)
-	accessIdentifiers := accessIdentifiers
-	accessIdentifiers.endpoint = server.URL
-	hostedZones := accessIdentifiers.Zones()
+	ai := accessIdentifiers
+	ai.endpoint = server.URL
+	hostedZones := ai.Zones()
 
 	if len(hostedZones.HostedZone) != 2 {
 		t.Fatal("Error reading remote hostedZones", hostedZones)
