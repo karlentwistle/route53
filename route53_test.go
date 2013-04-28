@@ -182,35 +182,35 @@ func TestGenerateZones(t *testing.T) {
 
 	hostedZones := generateZones(response_xml)
 
-	if hostedZones.HostedZone[0].Id != "/hostedzone/Z2CODL4TLWAY" {
+	if hostedZones.HostedZones[0].Id != "/hostedzone/Z2CODL4TLWAY" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[0].Name != "foo.who.com." {
+	if hostedZones.HostedZones[0].Name != "foo.who.com." {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[0].CallerReference != "F2FCD646" {
+	if hostedZones.HostedZones[0].CallerReference != "F2FCD646" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[0].RecordSetCount != 4 {
+	if hostedZones.HostedZones[0].RecordSetCount != 4 {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[1].Id != "/hostedzone/Z1CODL4TLWAY" {
+	if hostedZones.HostedZones[1].Id != "/hostedzone/Z1CODL4TLWAY" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[1].Name != "mho.woo.com." {
+	if hostedZones.HostedZones[1].Name != "mho.woo.com." {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[1].CallerReference != "96BA065A" {
+	if hostedZones.HostedZones[1].CallerReference != "96BA065A" {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 
-	if hostedZones.HostedZone[1].RecordSetCount != 6 {
+	if hostedZones.HostedZones[1].RecordSetCount != 6 {
 		t.Fatal("XML Unmarshal incorrectly", hostedZones)
 	}
 }
@@ -224,7 +224,7 @@ func TestAccessIdentifiersZones(t *testing.T) {
 	ai.endpoint = server.URL
 	hostedZones := ai.Zones()
 
-	if len(hostedZones.HostedZone) != 2 {
+	if len(hostedZones.HostedZones) != 2 {
 		t.Fatal("Error reading remote hostedZones", hostedZones)
 	}
 }

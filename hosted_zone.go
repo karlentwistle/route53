@@ -33,7 +33,7 @@ func (hz *CreateHostedZoneRequest) Create(a AccessIdentifiers) (req *http.Respon
 }
 
 type HostedZones struct {
-	HostedZone []HostedZone `xml:"HostedZones>HostedZone"`
+	HostedZones []HostedZone `xml:"HostedZones>HostedZone"`
 }
 
 type HostedZone struct {
