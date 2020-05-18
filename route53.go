@@ -68,6 +68,9 @@ func getBody(url string, headers http.Header) ([]byte, error) {
 	if err == nil {
 		req.Header = headers
 		resp, err := client.Do(req)
+    if err != nil {
+      return nil, err
+    }
 		defer resp.Body.Close()
 		if err == nil {
 			return ioutil.ReadAll(resp.Body)
